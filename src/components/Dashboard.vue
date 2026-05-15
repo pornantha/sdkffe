@@ -90,7 +90,10 @@ const chartData = computed(() => {
   
   const length = data.value.pm25.length;
   const labels = [];
+  
+  // หาเวลาชั่วโมงปัจจุบัน (ปัดนาทีและวินาทีทิ้งเป็น :00)
   const now = new Date();
+  now.setMinutes(0, 0, 0); 
   
   // สร้างเวลาเดินย้อนหลังทีละ 1 ชั่วโมง
   for (let i = length - 1; i >= 0; i--) {
