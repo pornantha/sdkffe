@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const email = ref('');
 const password = ref('');
 const isLoading = ref(false);
 const error = ref('');
-
-const emit = defineEmits(['login-success']);
 
 async function handleSubmit() {
   isLoading.value = true;
@@ -43,7 +44,8 @@ async function handleSubmit() {
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('token_type', data.token_type);
     
-    emit('login-success', data);
+    // ย้ายไปหน้า Dashboard หลังจาก login สำเร็จ
+    router.push('/');
   } catch (err: any) {
     error.value = err.message || 'Something went wrong';
   } finally {

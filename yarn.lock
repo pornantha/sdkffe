@@ -129,6 +129,11 @@
     "@vue/compiler-dom" "3.5.34"
     "@vue/shared" "3.5.34"
 
+"@vue/devtools-api@^6.6.4":
+  version "6.6.4"
+  resolved "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-6.6.4.tgz"
+  integrity sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==
+
 "@vue/language-core@3.2.9":
   version "3.2.9"
   resolved "https://registry.npmjs.org/@vue/language-core/-/language-core-3.2.9.tgz"
@@ -362,6 +367,13 @@ vue-chartjs@^5.3.3:
   resolved "https://registry.npmjs.org/vue-chartjs/-/vue-chartjs-5.3.3.tgz"
   integrity sha512-jqxtL8KZ6YJ5NTv6XzrzLS7osyegOi28UGNZW0h9OkDL7Sh1396ht4Dorh04aKrl2LiSalQ84WtqiG0RIJb0tA==
 
+vue-router@^4.6.4:
+  version "4.6.4"
+  resolved "https://registry.npmjs.org/vue-router/-/vue-router-4.6.4.tgz"
+  integrity sha512-Hz9q5sa33Yhduglwz6g9skT8OBPii+4bFn88w6J+J4MfEo4KRRpmiNG/hHHkdbRFlLBOqxN8y8gf2Fb0MTUgVg==
+  dependencies:
+    "@vue/devtools-api" "^6.6.4"
+
 vue-tsc@^3.2.8:
   version "3.2.9"
   resolved "https://registry.npmjs.org/vue-tsc/-/vue-tsc-3.2.9.tgz"
@@ -370,7 +382,7 @@ vue-tsc@^3.2.8:
     "@volar/typescript" "2.4.28"
     "@vue/language-core" "3.2.9"
 
-"vue@^3.0.0-0 || ^2.7.0", vue@^3.2.25, vue@^3.4.0, vue@^3.5.34, vue@3.5.34:
+"vue@^3.0.0-0 || ^2.7.0", vue@^3.2.25, vue@^3.4.0, vue@^3.5.0, vue@^3.5.34, vue@3.5.34:
   version "3.5.34"
   resolved "https://registry.npmjs.org/vue/-/vue-3.5.34.tgz"
   integrity sha512-WdLBG9gm02OgJIG9axd5Hpx0TFLdzVgfG2evFFu8Rur5O/IoGc5cMjnjh3tPL6GnRGsYvUhBSKVPYVcxRKpMCA==

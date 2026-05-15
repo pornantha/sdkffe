@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,7 +23,8 @@ ChartJS.register(
   Legend
 );
 
-const emit = defineEmits(['logout']);
+const router = useRouter();
+const isLoggedIn = ref(false);
 
 interface DashboardData {
   pm25: number[];
@@ -36,8 +38,13 @@ const isLoading = ref(true);
 const error = ref('');
 
 onMounted(async () => {
+  // Check login state
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    isLoggedIn.value = true;
+  }
+
   try {
-    // ใช้ proxy url หรือ url เต็มก็ได้
     const response = await fetch('https://sdokfrec.onrender.com/api/v1/sensors/dashboard/public');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -50,6 +57,16 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+function handleLogout() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('token_type');
+  isLoggedIn.value = false;
+}
+
+function goToLogin() {
+  router.push('/login');
+}
 
 // ดึงค่าล่าสุดมาแสดงที่ Card
 const latestPm25 = computed(() => {
@@ -71,7 +88,17 @@ const latestHumidity = computed(() => {
 const chartData = computed(() => {
   if (!data.value) return { labels: [], datasets: [] };
   
-  const labels = data.value.pm25.map((_, index) => `T-${data.value!.pm25.length - index}`);
+  const length = data.value.pm25.length;
+  const labels = [];
+  const now = new Date();
+  
+  // สร้างเวลาเดินย้อนหลังทีละ 1 ชั่วโมง
+  for (let i = length - 1; i >= 0; i--) {
+    const pastTime = new Date(now.getTime() - (i * 60 * 60 * 1000));
+    // จัดรูปแบบเวลา เช่น 13:00, 00:00
+    const timeString = pastTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    labels.push(timeString);
+  }
   
   return {
     labels,
@@ -111,7 +138,10 @@ const chartOptions = {
   <div class="dashboard-wrapper">
     <nav class="navbar">
       <div class="logo">EnvDash</div>
-      <button @click="emit('logout')" class="logout-btn">Logout</button>
+      <div>
+        <button v-if="isLoggedIn" @click="handleLogout" class="btn logout-btn">Logout</button>
+        <button v-else @click="goToLogin" class="btn login-btn">Login</button>
+      </div>
     </nav>
 
     <div class="content">
@@ -180,9 +210,7 @@ const chartOptions = {
   color: #0f172a;
 }
 
-.logout-btn {
-  background-color: #ef4444;
-  color: white;
+.btn {
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -191,8 +219,22 @@ const chartOptions = {
   transition: background-color 0.2s;
 }
 
+.logout-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
 .logout-btn:hover {
   background-color: #dc2626;
+}
+
+.login-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: #2563eb;
 }
 
 .content {
