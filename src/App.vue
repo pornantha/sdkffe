@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import LoginForm from './components/LoginForm.vue';
+import Dashboard from './components/Dashboard.vue';
 
 const isLoggedIn = ref(false);
 const user = ref(null);
@@ -30,34 +31,11 @@ function handleLogout() {
   <div v-if="!isLoggedIn">
     <LoginForm @login-success="handleLoginSuccess" />
   </div>
-  <div v-else class="logged-in-container">
-    <h1>Welcome!</h1>
-    <p>You are successfully logged in.</p>
-    <button @click="handleLogout" class="logout-button">Logout</button>
+  <div v-else>
+    <Dashboard @logout="handleLogout" />
   </div>
 </template>
 
 <style>
-.logged-in-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  text-align: center;
-}
-
-.logout-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.logout-button:hover {
-  background-color: #ff3333;
-}
+/* ลบสไตล์เก่าของ logged-in-container ออกไปเพราะไม่ได้ใช้แล้ว */
 </style>
