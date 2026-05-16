@@ -27,10 +27,14 @@ const router = useRouter();
 const isLoggedIn = ref(false);
 
 interface DashboardData {
+  labels: string[];
   pm25: number[];
   temperature: number[];
   humidity: number[];
-  image_urls: string[];
+  images: {
+    url: string;
+    captured_at: string;
+  }[];
 }
 
 const data = ref<DashboardData | null>(null);
@@ -68,63 +72,66 @@ function goToLogin() {
   router.push('/login');
 }
 
-// ดึงค่าล่าสุดมาแสดงที่ Card
+// ฟังก์ชันจัดรูปแบบเวลาที่ถ่ายภาพ (API ส่งเวลาไทยมาแล้ว แสดงผลโดยตรง)
+function formatImageTime(isoString: string) {
+  const date = new Date(isoString);
+  
+  // ใช้ฟังก์ชัน getUTC เพื่อดึงค่าตามที่ API ส่งมาโดยตรง ไม่ให้เบราว์เซอร์ไปลบ/บวกเวลาตามเครื่องผู้ใช้
+  const day = date.getUTCDate();
+  const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  const month = monthNames[date.getUTCMonth()];
+  const year = date.getUTCFullYear() + 543; // แปลงเป็น พ.ศ.
+  const hours = date.getUTCHours().toString().padStart(2, '0');
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+  
+  return `${day} ${month} ${year} ${hours}:${minutes}`;
+}
+
+// ดึงค่าล่าสุดมาแสดงที่ Card (ตัวแรกใน Array จาก API)
 const latestPm25 = computed(() => {
   if (!data.value || data.value.pm25.length === 0) return 0;
-  return data.value.pm25[data.value.pm25.length - 1].toFixed(1);
+  return data.value.pm25[0].toFixed(1);
 });
 
 const latestTemp = computed(() => {
   if (!data.value || data.value.temperature.length === 0) return 0;
-  return data.value.temperature[data.value.temperature.length - 1].toFixed(1);
+  return data.value.temperature[0].toFixed(1);
 });
 
 const latestHumidity = computed(() => {
   if (!data.value || data.value.humidity.length === 0) return 0;
-  return data.value.humidity[data.value.humidity.length - 1].toFixed(1);
+  return data.value.humidity[0].toFixed(1);
 });
 
 // ตั้งค่าข้อมูลสำหรับกราฟ
 const chartData = computed(() => {
   if (!data.value) return { labels: [], datasets: [] };
   
-  const length = data.value.pm25.length;
-  const labels = [];
-  
-  // หาเวลาชั่วโมงปัจจุบัน (ปัดนาทีและวินาทีทิ้งเป็น :00)
-  const now = new Date();
-  now.setMinutes(0, 0, 0); 
-  
-  // สร้างเวลาเดินย้อนหลังทีละ 1 ชั่วโมง
-  for (let i = length - 1; i >= 0; i--) {
-    const pastTime = new Date(now.getTime() - (i * 60 * 60 * 1000));
-    // จัดรูปแบบเวลา เช่น 13:00, 00:00
-    const timeString = pastTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    labels.push(timeString);
-  }
+  // ใช้ labels จาก API และ reverse เพื่อให้กราฟแสดงจากเก่าไปใหม่
+  const labels = [...data.value.labels].reverse();
   
   return {
     labels,
     datasets: [
       {
-        label: 'PM 2.5 (µg/m³)',
+        label: 'PM 2.5',
         backgroundColor: '#ef4444',
         borderColor: '#ef4444',
-        data: data.value.pm25,
+        data: [...data.value.pm25].reverse(),
         tension: 0.3
       },
       {
-        label: 'Temperature (°C)',
+        label: 'Temperature',
         backgroundColor: '#f59e0b',
         borderColor: '#f59e0b',
-        data: data.value.temperature,
+        data: [...data.value.temperature].reverse(),
         tension: 0.3
       },
       {
-        label: 'Humidity (%)',
+        label: 'Humidity',
         backgroundColor: '#3b82f6',
         borderColor: '#3b82f6',
-        data: data.value.humidity,
+        data: [...data.value.humidity].reverse(),
         tension: 0.3
       }
     ]
@@ -180,8 +187,11 @@ const chartOptions = {
         <div class="gallery-section">
           <h2>Recent Captures</h2>
           <div class="gallery-grid">
-            <div v-for="(url, index) in data.image_urls" :key="index" class="image-card">
-              <img :src="url" alt="Sensor Capture" loading="lazy" />
+            <div v-for="(img, index) in data.images" :key="index" class="image-card">
+              <div class="image-wrapper">
+                <img :src="img.url" alt="Sensor Capture" loading="lazy" />
+              </div>
+              <div class="image-time">{{ formatImageTime(img.captured_at) }}</div>
             </div>
           </div>
         </div>
@@ -266,14 +276,14 @@ const chartOptions = {
 /* Cards */
 .cards-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
 }
 
 .card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s;
 }
@@ -284,18 +294,18 @@ const chartOptions = {
 
 .card h3 {
   margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #64748b;
 }
 
 .card .value {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   color: #0f172a;
 }
 
 .card .value span {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #94a3b8;
 }
@@ -339,25 +349,41 @@ const chartOptions = {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 .image-card {
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  aspect-ratio: 4/3;
-  background-color: #f1f5f9;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
 }
 
-.image-card img {
+.image-wrapper {
+  aspect-ratio: 4/3;
+  overflow: hidden;
+}
+
+.image-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s;
 }
 
-.image-card:hover img {
+.image-card:hover .image-wrapper img {
   transform: scale(1.05);
+}
+
+.image-time {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  background-color: #fafafa;
 }
 </style>
